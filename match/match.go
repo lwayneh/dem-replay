@@ -200,6 +200,10 @@ func NewMatch(demoFileName string, fallbackFrameRate, fallbackTickRate float64) 
 				Player:         player,
 				Health:         player.Health(),
 				ViewDirectionX: player.ViewDirectionX(),
+				Money:          player.Money(),
+				Kills:          player.Kills(),
+				Deaths:         player.Deaths(),
+				Assists:        player.Assists(),
 			}
 			playersInfo = append(playersInfo, *info)
 		}
@@ -217,9 +221,19 @@ func NewMatch(demoFileName string, fallbackFrameRate, fallbackTickRate float64) 
 		}
 
 		bomb := *gameState.Bomb()
-
-		cts := *gameState.TeamCounterTerrorists()
 		ts := *gameState.TeamTerrorists()
+		cts := *gameState.TeamCounterTerrorists()
+
+		ct := ocom.Team{
+			TeamState: cts,
+			Score:     cts.Score(),
+			ClanName:  cts.ClanName(),
+		}
+		t := ocom.Team{
+			TeamState: ts,
+			Score:     ts.Score(),
+			ClanName:  ts.ClanName(),
+		}
 
 		var timer ocom.Timer
 
@@ -276,8 +290,8 @@ func NewMatch(demoFileName string, fallbackFrameRate, fallbackTickRate float64) 
 			Grenades:              grenades,
 			Infernos:              infernos,
 			Bomb:                  bomb,
-			TeamCounterTerrorists: cts,
-			TeamTerrorists:        ts,
+			TeamCounterTerrorists: ct,
+			TeamTerrorists:        t,
 			Timer:                 timer,
 		}
 

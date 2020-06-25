@@ -103,7 +103,10 @@ func drawPlayer(renderer *sdl.Renderer, player *ocom.Player, font *ttf.Font, mat
 }
 
 func drawGrenade(renderer *sdl.Renderer, grenade *common.GrenadeProjectile, match *match.Match) {
-	pos := grenade.Position()
+	//gPath gets a list of positions of the grenade projectile
+	gPath := grenade.Trajectory
+	//pos gets the last position from the list of positions in gPath
+	pos := gPath[len(gPath)-1]
 
 	scaledX, scaledY := meta.MapNameToMap[match.MapName].TranslateScale(pos.X, pos.Y)
 	var scaledXInt int32 = int32(scaledX) + mapXOffset
@@ -243,7 +246,7 @@ func drawInfobar(renderer *sdl.Renderer, players []ocom.Player, x, y int32, colo
 		if player.HasDefuseKit() {
 			drawString(renderer, "D", color, x+50, yOffset+10, font)
 		}
-		drawString(renderer, fmt.Sprintf("%v $", player.Money()), colorMoney, x+5, yOffset+25, font)
+		drawString(renderer, fmt.Sprintf("%v $", player.Money), colorMoney, x+5, yOffset+25, font)
 		var nadeCounter int32
 		weapons := player.Weapons()
 		sort.Slice(weapons, func(i, j int) bool { return weapons[i].Type < weapons[j].Type })
@@ -282,7 +285,7 @@ func drawInfobar(renderer *sdl.Renderer, players []ocom.Player, x, y int32, colo
 				}
 			}
 		}
-		kdaInfo := fmt.Sprintf("%v / %v / %v", player.Kills(), player.Assists(), player.Deaths())
+		kdaInfo := fmt.Sprintf("%v / %v / %v", player.Kills, player.Assists, player.Deaths)
 		drawString(renderer, kdaInfo, color, x+5, yOffset+40, font)
 
 		yOffset += infobarElementHeight

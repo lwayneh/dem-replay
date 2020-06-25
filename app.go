@@ -347,15 +347,15 @@ func handleKeyboardEvents(eventT *sdl.KeyboardEvent, window *sdl.Window, match *
 func updateWindowTitle(window *sdl.Window, match *match.Match) {
 	cts := match.States[curFrame].TeamCounterTerrorists
 	ts := match.States[curFrame].TeamTerrorists
-	clanNameCTs := cts.ClanName()
+	clanNameCTs := cts.ClanName
 	if clanNameCTs == "" {
 		clanNameCTs = "Counter Terrorists"
 	}
-	clanNameTs := ts.ClanName()
+	clanNameTs := ts.ClanName
 	if clanNameTs == "" {
 		clanNameTs = "Terrorists"
 	}
-	windowTitle := fmt.Sprintf("%s  [%d:%d]  %s - Round %d", clanNameCTs, cts.Score(), ts.Score(), clanNameTs, cts.Score()+ts.Score()+1)
+	windowTitle := fmt.Sprintf("%s  [%d:%d]  %s - Round %d", clanNameCTs, cts.Score, ts.Score, clanNameTs, cts.Score+ts.Score+1)
 	// expensive?
 	window.SetTitle(windowTitle)
 }

@@ -29,8 +29,8 @@ type OverviewState struct {
 	Grenades              []common.GrenadeProjectile
 	Infernos              []common.Inferno
 	Bomb                  common.Bomb
-	TeamCounterTerrorists common.TeamState
-	TeamTerrorists        common.TeamState
+	TeamCounterTerrorists Team
+	TeamTerrorists        Team
 	Timer                 Timer
 	Health                map[string]int
 }
@@ -40,6 +40,17 @@ type Player struct {
 	common.Player
 	Health         int
 	ViewDirectionX float32
+	Money          int
+	Kills          int
+	Deaths         int
+	Assists        int
+}
+
+// Team extends the TeamState type from the parser
+type Team struct {
+	common.TeamState
+	Score    int
+	ClanName string
 }
 
 // GrenadeEffect extends the GrenadeEvent type from the parser by the Lifetime
