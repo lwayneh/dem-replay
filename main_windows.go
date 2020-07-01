@@ -19,8 +19,8 @@ func main() {
 	if err != nil {
 		log.Fatalln("trying to get user home directory:", err)
 	}
-	defaultFontPath := fmt.Sprintf("%v\\csgoverview\\%v.ttf", userHomeDir, fontName)
-	defaultOverviewDirectory := fmt.Sprintf("%v\\csgoverview\\", userHomeDir)
+	defaultFontPath := fmt.Sprintf("%v\\dem-replay\\%v.ttf", userHomeDir, fontName)
+	defaultOverviewDirectory := fmt.Sprintf("%v\\dem-replay\\", userHomeDir)
 	flag.StringVar(&conf.FontPath, "fontpath", defaultFontPath, "Path to font file (.ttf)")
 	flag.StringVar(&conf.OverviewDir, "overviewdir", defaultOverviewDirectory, "Path to overview directory")
 	flag.Parse()

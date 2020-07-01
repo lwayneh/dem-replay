@@ -44,6 +44,9 @@ type Player struct {
 	Kills          int
 	Deaths         int
 	Assists        int
+	Armor          int
+	Helmet         bool
+	Kit            bool
 }
 
 // Team extends the TeamState type from the parser

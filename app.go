@@ -21,12 +21,15 @@ const (
 	mapOverviewHeight    int32 = 1024
 	mapXOffset           int32 = 300
 	mapYOffset           int32 = 0
-	infobarElementHeight int32 = 100
+	infobarElementHeight int32 = 115
 )
 
 var (
-	paused   bool
-	curFrame int
+	paused     bool
+	curFrame   int
+	imgSprite  = "imgSprite.png"
+	imgTexture *sdl.Texture
+	loadRect   = sdl.Rect{0, 300, 1624, 200}
 )
 
 // Config contains information the application requires in order to run
@@ -55,7 +58,7 @@ func run(c *Config) error {
 	if len(flag.Args()) < 1 {
 		demoFileNameB, err := exec.Command("zenity", "--file-selection").Output()
 		if err != nil {
-			fmt.Println("Usage: ./csgoverview [path to demo]")
+			fmt.Println("Usage: ./dem-replay [path to demo]")
 			return err
 		}
 		demoFileName = string(demoFileNameB)[:len(demoFileNameB)-1]
@@ -93,7 +96,7 @@ func run(c *Config) error {
 	defer font.Close()
 	font.SetStyle(ttf.STYLE_BOLD)
 
-	window, err := sdl.CreateWindow("csgoverview", sdl.WINDOWPOS_UNDEFINED, sdl.WINDOWPOS_UNDEFINED,
+	window, err := sdl.CreateWindow("dem-replay", sdl.WINDOWPOS_UNDEFINED, sdl.WINDOWPOS_UNDEFINED,
 		winWidth, winHeight, sdl.WINDOW_SHOWN|sdl.WINDOW_RESIZABLE)
 	if err != nil {
 		errorString := fmt.Sprintf("trying to create SDL window:\n%v", err)
@@ -102,7 +105,7 @@ func run(c *Config) error {
 	}
 	defer window.Destroy()
 
-	renderer, err := sdl.CreateRenderer(window, -1, sdl.RENDERER_SOFTWARE)
+	renderer, err := sdl.CreateRenderer(window, -1, sdl.RENDERER_ACCELERATED|sdl.RENDERER_TARGETTEXTURE)
 	if err != nil {
 		errorString := fmt.Sprintf("trying to create SDL renderer:\n%v", err)
 		sdl.ShowSimpleMessageBox(sdl.MESSAGEBOX_ERROR, "Error", errorString, window)
@@ -110,6 +113,10 @@ func run(c *Config) error {
 	}
 	defer renderer.Destroy()
 	renderer.SetLogicalSize(mapOverviewWidth+2*mapXOffset, mapOverviewHeight+mapYOffset)
+	renderer.SetDrawColor(192, 192, 192, 100)
+	renderer.FillRect(&loadRect)
+	DrawString(renderer, "Loading demo for replay... this can take a few seconds.", sdl.Color{0, 86, 137, 255}, loadRect.W/2-100, 400, font)
+	renderer.Present()
 
 	match, err := match.NewMatch(demoFileName, c.FrameRate, c.TickRate)
 	if err != nil {
@@ -142,8 +149,27 @@ func run(c *Config) error {
 		return err
 	}
 	defer mapTexture.Destroy()
+	mapTexture.SetBlendMode(sdl.BLENDMODE_BLEND)
+
+	sdl.SetHint(sdl.HINT_RENDER_SCALE_QUALITY, "2")
+	sprite, err := img.Load(filepath.Join(c.OverviewDir, imgSprite))
+	if err != nil {
+		errorString := fmt.Sprintf("trying to load sprite .png image:\n%v", err)
+		sdl.ShowSimpleMessageBox(sdl.MESSAGEBOX_ERROR, "Error", errorString, window)
+		return err
+	}
+
+	imgTexture, err = renderer.CreateTextureFromSurface(sprite)
+	if err != nil {
+		errorString := fmt.Sprintf("trying to create texture from surface:\n%v", err)
+		sdl.ShowSimpleMessageBox(sdl.MESSAGEBOX_ERROR, "Error", errorString, window)
+		return err
+	}
+	defer imgTexture.Destroy()
 
 	mapRect := &sdl.Rect{mapXOffset, mapYOffset, mapOverviewWidth, mapOverviewHeight}
+
+	sprite.Free()
 
 	// MAIN GAME LOOP
 	for {
@@ -182,12 +208,12 @@ func run(c *Config) error {
 
 		if paused {
 			sdl.Delay(32)
-			updateGraphics(renderer, match, font, mapTexture, mapRect)
+			updateGraphics(renderer, match, font, mapTexture, mapRect, imgTexture)
 			updateWindowTitle(window, match)
 			continue
 		}
 
-		updateGraphics(renderer, match, font, mapTexture, mapRect)
+		updateGraphics(renderer, match, font, mapTexture, mapRect, imgTexture)
 		updateWindowTitle(window, match)
 
 		var playbackSpeed float64 = 1
@@ -360,11 +386,11 @@ func updateWindowTitle(window *sdl.Window, match *match.Match) {
 	window.SetTitle(windowTitle)
 }
 
-func updateGraphics(renderer *sdl.Renderer, match *match.Match, font *ttf.Font, mapTexture *sdl.Texture, mapRect *sdl.Rect) {
-	renderer.SetDrawColor(10, 10, 10, 255)
+func updateGraphics(renderer *sdl.Renderer, match *match.Match, font *ttf.Font, mapTexture *sdl.Texture, mapRect *sdl.Rect, imgTexture *sdl.Texture) {
+	renderer.SetDrawColor(0, 0, 0, 255)
 	renderer.Clear()
 
-	drawInfobars(renderer, match, font)
+	drawInfobars(renderer, match, font, imgTexture)
 	renderer.Copy(mapTexture, nil, mapRect)
 
 	shots := match.Shots[curFrame]

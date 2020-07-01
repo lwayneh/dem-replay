@@ -27,7 +27,7 @@ const (
 var (
 	colorTerror       = sdl.Color{252, 176, 12, 255}
 	colorCounter      = sdl.Color{89, 206, 200, 255}
-	colorMoney        = sdl.Color{45, 135, 45, 255}
+	colorMoney        = sdl.Color{0, 255, 0, 255}
 	colorBomb         = sdl.Color{255, 0, 0, 255}
 	colorEqDecoy      = sdl.Color{102, 34, 0, 255}
 	colorEqMolotov    = sdl.Color{255, 153, 0, 255}
@@ -40,6 +40,15 @@ var (
 	colorDarkWhite    = sdl.Color{200, 200, 200, 255}
 	colorFlashEffect  = sdl.Color{200, 200, 200, 180}
 	colorAwpShot      = sdl.Color{255, 50, 0, 255}
+	helmetRec         = &sdl.Rect{416, 127, 18, 20}
+	armorRec          = &sdl.Rect{176, 166, 19, 20}
+	kitRec            = &sdl.Rect{450, 288, 26, 24}
+	cartRec           = &sdl.Rect{290, 385, 36, 31}
+	mollyRec          = &sdl.Rect{456, 254, 22, 29}
+	flashRec          = &sdl.Rect{453, 385, 24, 28}
+	smokeRec          = &sdl.Rect{455, 67, 14, 27}
+	heRec             = &sdl.Rect{228, 378, 21, 27}
+	decoyRec          = &sdl.Rect{396, 413, 25, 30}
 )
 
 func drawPlayer(renderer *sdl.Renderer, player *ocom.Player, font *ttf.Font, match *match.Match) {
@@ -60,7 +69,7 @@ func drawPlayer(renderer *sdl.Renderer, player *ocom.Player, font *ttf.Font, mat
 
 		gfx.AACircleColor(renderer, scaledXInt, scaledYInt, radiusPlayer, color)
 
-		drawString(renderer, cropStringToN(player.Name, 10), color, scaledXInt+10, scaledYInt+10, font)
+		DrawString(renderer, cropStringToN(player.Name, 10), color, scaledXInt+10, scaledYInt+10, font)
 
 		viewAngle := -int32(player.ViewDirectionX) // negated because of sdl
 		gfx.ArcColor(renderer, scaledXInt, scaledYInt, radiusPlayer+1, viewAngle-20, viewAngle+20, colorDarkWhite)
@@ -185,7 +194,7 @@ func drawBomb(renderer *sdl.Renderer, bomb *common.Bomb, match *match.Match) {
 	gfx.BoxColor(renderer, scaledXInt-3, scaledYInt-2, scaledXInt+3, scaledYInt+2, colorBomb)
 }
 
-func drawString(renderer *sdl.Renderer, text string, color sdl.Color, x, y int32, font *ttf.Font) {
+func DrawString(renderer *sdl.Renderer, text string, color sdl.Color, x, y int32, font *ttf.Font) {
 	textSurface, err := font.RenderUTF8Blended(text, color)
 	if err != nil {
 		log.Fatal(err)
@@ -195,6 +204,7 @@ func drawString(renderer *sdl.Renderer, text string, color sdl.Color, x, y int32
 	if err != nil {
 		log.Fatal(err)
 	}
+	textTexture.SetBlendMode(sdl.BLENDMODE_BLEND)
 	defer textTexture.Destroy()
 	textRect := &sdl.Rect{
 		X: x,
@@ -208,7 +218,7 @@ func drawString(renderer *sdl.Renderer, text string, color sdl.Color, x, y int32
 	}
 }
 
-func drawInfobars(renderer *sdl.Renderer, match *match.Match, font *ttf.Font) {
+func drawInfobars(renderer *sdl.Renderer, match *match.Match, font *ttf.Font, texture *sdl.Texture) {
 	var cts, ts []ocom.Player
 	for _, player := range match.States[curFrame].Players {
 		if player.Team == common.TeamCounterTerrorists {
@@ -220,64 +230,66 @@ func drawInfobars(renderer *sdl.Renderer, match *match.Match, font *ttf.Font) {
 	}
 	sort.Slice(cts, func(i, j int) bool { return cts[i].SteamID64 < cts[j].SteamID64 })
 	sort.Slice(ts, func(i, j int) bool { return ts[i].SteamID64 < ts[j].SteamID64 })
-	drawInfobar(renderer, cts, 0, mapYOffset, colorCounter, font)
-	drawInfobar(renderer, ts, mapXOffset+mapOverviewWidth, mapYOffset, colorTerror, font)
+	drawInfobar(renderer, cts, 0, mapYOffset, colorCounter, font, texture)
+	drawInfobar(renderer, ts, mapXOffset+mapOverviewWidth, mapYOffset, colorTerror, font, texture)
 	drawKillfeed(renderer, match.Killfeed[curFrame], mapXOffset+mapOverviewWidth, mapYOffset+600, font)
 	drawTimer(renderer, match.States[curFrame].Timer, 0, mapYOffset+600, font)
 }
 
-func drawInfobar(renderer *sdl.Renderer, players []ocom.Player, x, y int32, color sdl.Color, font *ttf.Font) {
+func drawInfobar(renderer *sdl.Renderer, players []ocom.Player, x, y int32, color sdl.Color, font *ttf.Font, texture *sdl.Texture) {
 	var yOffset int32
 	for _, player := range players {
 		if player.Health > 0 {
-			gfx.BoxColor(renderer, x+int32(player.Health)*(mapXOffset/infobarElementHeight), yOffset, x, yOffset+5, color)
+			gfx.BoxColor(renderer, x+int32(player.Health)*(mapXOffset/100), yOffset, x, yOffset+5, color)
 		}
 		if player.Health < 1 {
 			color.A = 150
 		}
-		drawString(renderer, cropStringToN(player.Name, 20), color, x+85, yOffset+10, font)
+		DrawString(renderer, cropStringToN(player.Name, 20), color, x+85, yOffset+10, font)
 		color.A = 255
-		drawString(renderer, fmt.Sprintf("%v", player.Health), color, x+5, yOffset+10, font)
-		if player.Armor() > 0 && player.HasHelmet() {
-			drawString(renderer, "H", color, x+35, yOffset+10, font)
-		} else if player.Armor() > 0 {
-			drawString(renderer, "A", color, x+35, yOffset+10, font)
+		DrawString(renderer, fmt.Sprintf("%v", player.Health), color, x+5, yOffset+10, font)
+		if player.Armor > 0 && player.Helmet {
+			drawImg(renderer, texture, helmetRec, x+5, yOffset+80, 0)
+		} else if player.Armor > 0 {
+			drawImg(renderer, texture, armorRec, x+5, yOffset+80, 0)
 		}
-		if player.HasDefuseKit() {
-			drawString(renderer, "D", color, x+50, yOffset+10, font)
+		if player.Kit {
+			drawImg(renderer, texture, kitRec, x+30, yOffset+80, 0)
 		}
-		drawString(renderer, fmt.Sprintf("%v $", player.Money), colorMoney, x+5, yOffset+25, font)
+		drawImg(renderer, texture, cartRec, x+2, yOffset+30, -.4)
+		DrawString(renderer, fmt.Sprintf("$%v", player.Money), colorMoney, x+25, yOffset+33, font)
 		var nadeCounter int32
 		weapons := player.Weapons()
 		sort.Slice(weapons, func(i, j int) bool { return weapons[i].Type < weapons[j].Type })
 		for _, w := range weapons {
 			if w.Class() == common.EqClassSMG || w.Class() == common.EqClassHeavy || w.Class() == common.EqClassRifle {
-				drawString(renderer, w.Type.String(), color, x+150, yOffset+25, font)
+				DrawString(renderer, w.Type.String(), color, x+150, yOffset+30, font)
 			}
 			if w.Class() == common.EqClassPistols {
-				drawString(renderer, w.Type.String(), color, x+150, yOffset+40, font)
+				DrawString(renderer, w.Type.String(), color, x+150, yOffset+55, font)
 			}
 			if w.Class() == common.EqClassGrenade {
-				var nadeColor sdl.Color
+				var nadeRect sdl.Rect
 				switch w.Type {
 				case common.EqDecoy:
-					nadeColor = colorEqDecoy
+					nadeRect = *decoyRec
 				case common.EqMolotov:
-					nadeColor = colorEqMolotov
+					nadeRect = *mollyRec
 				case common.EqIncendiary:
-					nadeColor = colorEqIncendiary
+					nadeRect = *mollyRec
 				case common.EqFlash:
-					nadeColor = colorEqFlash
+					nadeRect = *flashRec
 				case common.EqSmoke:
-					nadeColor = colorEqSmoke
+					nadeRect = *smokeRec
 				case common.EqHE:
-					nadeColor = colorEqHE
+					nadeRect = *heRec
 				}
 
 				for i := 0; i < player.AmmoLeft[w.AmmoType()]; i++ {
-					gfx.BoxColor(renderer, x+150+nadeCounter*12, yOffset+60, x+150+nadeCounter*12+6, yOffset+60+9, nadeColor)
+					drawImg(renderer, texture, &nadeRect, x+150+nadeCounter*35, yOffset+80, 0)
 					nadeCounter++
 				}
+
 			}
 			if w.Class() == common.EqClassEquipment {
 				if w.Type == common.EqBomb {
@@ -286,7 +298,7 @@ func drawInfobar(renderer *sdl.Renderer, players []ocom.Player, x, y int32, colo
 			}
 		}
 		kdaInfo := fmt.Sprintf("%v / %v / %v", player.Kills, player.Assists, player.Deaths)
-		drawString(renderer, kdaInfo, color, x+5, yOffset+40, font)
+		DrawString(renderer, kdaInfo, color, x+5, yOffset+55, font)
 
 		yOffset += infobarElementHeight
 	}
@@ -311,16 +323,16 @@ func drawKillfeed(renderer *sdl.Renderer, killfeed []ocom.Kill, x, y int32, font
 		killerName := cropStringToN(kill.KillerName, 10)
 		victimName := cropStringToN(kill.VictimName, 10)
 		weaponName := cropStringToN(kill.Weapon, 10)
-		drawString(renderer, killerName, colorKiller, x+5, y+yOffset, font)
-		drawString(renderer, weaponName, colorDarkWhite, x+110, y+yOffset, font)
-		drawString(renderer, victimName, colorVictim, x+200, y+yOffset, font)
+		DrawString(renderer, killerName, colorKiller, x+5, y+yOffset, font)
+		DrawString(renderer, weaponName, colorDarkWhite, x+110, y+yOffset, font)
+		DrawString(renderer, victimName, colorVictim, x+200, y+yOffset, font)
 		yOffset += killfeedHeight
 	}
 }
 
 func drawTimer(renderer *sdl.Renderer, timer ocom.Timer, x, y int32, font *ttf.Font) {
 	if timer.Phase == ocom.PhaseWarmup {
-		drawString(renderer, "Warmup", colorDarkWhite, x+5, y, font)
+		DrawString(renderer, "Warmup", colorDarkWhite, x+5, y, font)
 	} else {
 		minutes := int(timer.TimeRemaining.Minutes())
 		seconds := int(timer.TimeRemaining.Seconds()) - 60*minutes
@@ -333,7 +345,7 @@ func drawTimer(renderer *sdl.Renderer, timer ocom.Timer, x, y int32, font *ttf.F
 		} else {
 			color = colorDarkWhite
 		}
-		drawString(renderer, timeString, color, x+5, y, font)
+		DrawString(renderer, timeString, color, x+5, y, font)
 	}
 }
 
@@ -364,4 +376,22 @@ func cropStringToN(s string, n int) string {
 	}
 
 	return s
+}
+
+func drawImg(renderer *sdl.Renderer, texture *sdl.Texture, rect *sdl.Rect, x, y int32, scale float32) {
+	var scaleW, scaleH int32
+
+	if scale != 0 {
+		scaleW = rect.W + (int32(float32(rect.W) * scale))
+		scaleH = rect.H + (int32(float32(rect.H) * scale))
+	}
+
+	if scale == 0 {
+		scaleW = rect.W
+		scaleH = rect.H
+	}
+
+	dstRec := sdl.Rect{x, y, scaleW, scaleH}
+	renderer.Copy(texture, rect, &dstRec)
+
 }

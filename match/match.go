@@ -204,6 +204,9 @@ func NewMatch(demoFileName string, fallbackFrameRate, fallbackTickRate float64) 
 				Kills:          player.Kills(),
 				Deaths:         player.Deaths(),
 				Assists:        player.Assists(),
+				Armor:          player.Armor(),
+				Helmet:         player.HasHelmet(),
+				Kit:            player.HasDefuseKit(),
 			}
 			playersInfo = append(playersInfo, *info)
 		}
@@ -252,8 +255,9 @@ func NewMatch(demoFileName string, fallbackFrameRate, fallbackTickRate float64) 
 					Phase:         ocom.PhaseFreezetime,
 				}
 			case ocom.PhaseRegular:
-				roundtime, _ := strconv.ParseFloat(gameState.ConVars()["mp_roundtime_defuse"], 64)
-				remaining := time.Duration(roundtime*60)*time.Second - (parser.CurrentTime() - match.latestTimerEventTime)
+				round := 115
+				//roundtime, _ := strconv.ParseFloat(gameState.ConVars()["mp_roundtime_defuse"], 64)
+				remaining := (time.Duration(round)*time.Second - (parser.CurrentTime() - match.latestTimerEventTime))
 				timer = ocom.Timer{
 					TimeRemaining: remaining,
 					Phase:         ocom.PhaseRegular,
