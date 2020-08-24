@@ -4,6 +4,7 @@ package common
 import (
 	"time"
 
+	"github.com/faiface/pixel"
 	"github.com/golang/geo/r3"
 	"github.com/markus-wa/demoinfocs-golang/v2/pkg/demoinfocs/common"
 	event "github.com/markus-wa/demoinfocs-golang/v2/pkg/demoinfocs/events"
@@ -44,12 +45,25 @@ type Player struct {
 	Kills          int
 	Deaths         int
 	Assists        int
+	Armor          int
+	Helmet         bool
+	Kit            bool
+	ActiveWeapon   *common.Equipment
+	FlashRemaining time.Duration
+	ClanName       string
+	ShortName      string
 }
 
 // Team extends the TeamState type from the parser
 type Team struct {
 	common.TeamState
 	Score    int
+	ClanName string
+}
+
+// Clan saves details of teams tags - used to shorten player names
+type Clan struct {
+	Tag      string
 	ClanName string
 }
 
@@ -80,4 +94,27 @@ type Shot struct {
 	Position       r3.Vector
 	ViewDirectionX float32
 	IsAwpShot      bool
+}
+
+// Control is an onscreen control for manipulating replay feedback (Play, Pause, Fastforward, Rewind, etc.)
+type Control struct {
+	Name   string
+	Rect   pixel.Rect
+	Offset pixel.Vec //Offset from center of control bar
+	Scale  float64
+	Sprite *pixel.Sprite
+	Status Status
+}
+
+type Status struct {
+	Name string
+	Id   int
+}
+
+func (c *Control) SetScale(scale float64) {
+	c.Scale = scale
+}
+
+func (c *Control) SetOffset(offset pixel.Vec) {
+	c.Offset = offset
 }
