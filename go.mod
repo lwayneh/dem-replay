@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 module github.com/local/dem-replay
 
 go 1.14
@@ -11,3 +12,14 @@ require (
 	github.com/markus-wa/demoinfocs-golang/v2 v2.3.0
 	golang.org/x/image v0.0.0-20200618115811-c13761719519
 )
+=======
+module github.com/lwayneh/dem-replay
+
+go 1.14
+
+require (
+	github.com/golang/geo v0.0.0-20200319012246-673a6f80352d
+	github.com/markus-wa/demoinfocs-golang/v2 v2.2.0
+	github.com/veandco/go-sdl2 v0.4.4
+)
+>>>>>>> 3e09447e6ad137e8ff21ba225067df5bc4d25afc
